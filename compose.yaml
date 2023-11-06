@@ -1,0 +1,35 @@
+version: '2.2'
+
+services:
+  postgres:
+    build:
+      dockerfile: Dockerfile.postgres
+    image: 'postgres:latest'
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_DB: 'coffee'
+      POSTGRES_PASSWORD: 'root'
+      POSTGRES_USER: 'postgres'
+    volumes:
+      - db:/var/lib/postgresql/newdata
+      - ./db/init-db.sql:/docker-entrypoint-initdb.d/create_tables.sql
+
+  coffee-service:
+    build:
+      dockerfile: Dockerfile.service
+    image: 'coffee-service-app:latest'
+    ports:
+      - '8081:8080'
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres:5432/coffee'
+      SPRING_DATASOURCE_USERNAME: 'postgres'
+      SPRING_DATASOURCE_PASSWORD: 'root'
+      SPRING_JPA_HIBERNATE_DDL_AUTO: 'none'
+      SPRING_JPA_DATABASE_PLATFORM: 'org.hibernate.dialect.PostgreSQLDialect'
+
+volumes:
+  db:
+    driver: local
